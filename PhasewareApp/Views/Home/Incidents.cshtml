@@ -1,0 +1,136 @@
+﻿@using PagedList.Mvc;
+
+@model PagedList.IPagedList<PhasewareInterview.Models.IncidentModel>
+
+<div class="row">
+    <h2>Search Incidents</h2>
+</div>
+<div class="row" style="margin-bottom:20px;">
+    <div class="form-group">
+        <p>Any incident that contains a 2 in its Incident ID are pulled by default. Please use filter options if other results are needed.</p>
+        <button class="btn-primary btn-sm col-md-4" id="BtnFilter" style="width:200px;">Filter Options</button>
+    </div>
+</div>
+<div class="row">
+    <table class="table table-bordered" id="IncidentResults">
+        @if (Model != null && Model.Any())
+        {
+            <tr id="HeadersRow">
+                <th id="HeaderIncidentID">Incident ID</th>
+                <th>Department Name</th>
+                <th>Description</th>
+                <th>View Details</th>
+            </tr>
+            foreach (var item in Model)
+            {
+                <tr id="DataRow">
+                    <td>@item.IncidentID</td>
+                    <td>@item.DepartmentName</td>
+                    <td>@item.Description</td>
+                    <td style="text-align:center;"><a class="fa fa-info-circle" href="#" ></a></td>
+                </tr>
+            }
+        }
+
+        else
+        {
+            <tr>
+                <td><div>No records found</div></td>
+            </tr>
+        }
+    </table>
+
+    @Html.PagedListPager(Model ?? new PagedList.PagedList<PhasewareInterview.Models.IncidentModel>(null, 1, 10), Page => Url.Action("Incidents", new { Page }))
+</div>
+
+
+
+<!--Modal to view Incident Details-->
+<div class="modal fade" id="IncidentDetailsModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">×</button>
+                <h1>Incident Details</h1>
+            </div>
+            <div class="modal-body" id="IncDetailsBody">
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+<!--Modal to search Incidents with different filters-->
+<div class="modal fade" id="FilterModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">×</button>
+                <h1>Filter Options</h1>
+            </div>
+            <div class="modal-body" id="IncDetailsBody">
+                <form action="/Home/Incidents" method="get" id="FrmSearch">
+                    <label style="width:300px;">Incident ID:</label><input type="number" id="InputIncidentID" /><br />
+                    <label style="width:300px;">Department Name:</label><input type="text" id="InputDeptName" /><br />
+                    <label style="width:300px;">Customer Name:</label><input type="text" id="InputCustName" /><br />
+                    <label style="width:300px;">Agent Name:</label><input type="text" id="InputAgentName" /><br />
+                </form>
+            </div>
+            <div class="modal-footer" style="text-align:center;">
+                <button type="button" id="BtnCancelSearch" class="btn btn-primary" style="text-align:center; margin-right:20px;">Cancel</button>
+                <button type="submit" id ="BtnSearchWithFilters" class="btn btn-primary" style="text-align:center;">Search Incidents</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#BtnFilter').click(function () {
+            $('#FilterModal').modal('show');
+        });
+
+        $('#BtnCancelSearch').click(function () {
+            $('#FilterModal').modal('hide');
+            $('#FrmSearch').find('input').val('');
+        });
+
+        $('#BtnSearchWithFilters').click(function () {
+            $('#FilterModal').modal('hide');
+
+            window.location.href = '@Url.Action("Incidents")?Page=1&incidentID=' + $('#InputIncidentID').val() + '&deptName=' + $('#InputDeptName').val() + '&custName=' + $('#InputCustName').val() + '&agentName=' + $('#InputAgentName').val();
+
+            $('#FrmSearch').find('input').val('');
+        });
+
+        $('table tr td a').click(function () {
+            var incidentID = $(this).closest('tr').find('td:eq(0)').text();
+            $.ajax({
+                type: 'GET',
+                url: '/Home/GetIncidentDetails',
+                data: { IncidentId: incidentID },
+                contentType: 'application/json; charset=utf-8',
+                success: function (data) {
+                    $('#IncDetailsBody').empty();
+                    var content = '<label style=\'width:400px;\'>Incident ID</label><span>' + data.IncidentID + '</span><br>' +
+                        '<label style=\'width:400px;\'>Department Name</label><span>' + data.DepartmentName + '</span><br>' +
+                        '<label style=\'width:400px;\'>Customer Name</label><span>' + data.CustomerName + '</span><br>' +
+                        '<label style=\'width:400px;\'>Agent Name</label><span>' + data.AgentFullName + '</span><br>' +
+                        '<label style=\'width:400px;\'>Description</label><span>' + data.Description + '</span><br>';
+                    $('#IncDetailsBody').append(content);
+                    $('#IncidentDetailsModal').modal('show');
+                },
+                error: function () {
+                    alert('An error occured pulling incident details! Please try again.');
+                }
+            });
+        });
+    });
+</script>
