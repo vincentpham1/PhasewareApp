@@ -24,7 +24,8 @@ namespace PhasewareApp.Controllers
 
             IEnumerable<IncidentModel> incidents = SearchForIncidents(incidentID, deptName, custName, agentName);
 
-            return (incidents != null && incidents.Any()) ? View(incidents.ToPagedList(pageIndex, pageSize)) : View(incidents);
+            //return (incidents != null && incidents.Any()) ? View(incidents.ToPagedList(pageIndex, pageSize)) : View(incidents);
+            return View(incidents.ToPagedList(pageIndex, pageSize));
         }
 
         public JsonResult GetIncidentDetails(int IncidentId)
